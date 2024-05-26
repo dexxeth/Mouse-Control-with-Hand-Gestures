@@ -1,82 +1,56 @@
 import cv2
 import mediapipe as mp
 import pyautogui
-import time
 
 cam = cv2.VideoCapture(0)
-hand_detect = mp.solutions.hands.Hands()
+face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
 drawing_utils = mp.solutions.drawing_utils
+screen_w, screen_h = pyautogui.size()
 
-screen_width, screen_height = pyautogui.size()
-
-prev_x, prev_y = screen_width // 2, screen_height // 2
-
-last_click_time = 0
-double_click_threshold = 0.5
-
+prev_x, prev_y = screen_w // 2, screen_h // 2
 
 def smooth_move(x, y, prev_x, prev_y, smoothing=0.9):
-    new_x = prev_x + (x - prev_x) * smoothing
-    new_y = prev_y + (y - prev_y) * smoothing
+    new_x = int(prev_x + (x - prev_x) * smoothing)
+    new_y = int(prev_y + (y - prev_y) * smoothing)
     return new_x, new_y
-
 
 while True:
     _, frame = cam.read()
     frame = cv2.flip(frame, 1)
-    frame_height, frame_width, _ = frame.shape
-
+    frame_h, frame_w, _ = frame.shape
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    output = hand_detect.process(rgb_frame)
-    hands = output.multi_hand_landmarks
 
-    if hands:
-        for hand in hands:
+    output = face_mesh.process(rgb_frame)
+    if output.multi_face_landmarks:
+        for face_landmarks in output.multi_face_landmarks:
             drawing_utils.draw_landmarks(
                 frame,
-                hand,
-                mp.solutions.hands.HAND_CONNECTIONS,
-                drawing_utils.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-                drawing_utils.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
+                face_landmarks,
+                mp.solutions.face_mesh.FACEMESH_CONTOURS,
+                landmark_drawing_spec=drawing_utils.DrawingSpec(color=(0, 255, 255), thickness=1, circle_radius=1),
+                connection_drawing_spec=drawing_utils.DrawingSpec(color=(0, 0, 255), thickness=1)
             )
-            landmarks = hand.landmark
-            index_x, index_y = 0, 0
-            thumb_x, thumb_y = 0, 0
 
-            for id, landmark in enumerate(landmarks):
-                x = int(landmark.x * frame_width)
-                y = int(landmark.y * frame_height)
+            left_eye_landmarks = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145]
+            left_eye_points = []
+            for idx in left_eye_landmarks:
+                landmark = face_landmarks.landmark[idx]
+                x = int(landmark.x * frame_w)
+                y = int(landmark.y * frame_h)
+                left_eye_points.append((x, y))
+                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
-                if id == 8:
-                    cv2.circle(img=frame, center=(x, y), radius=12, color=(0, 255, 255), thickness=-1)
-                    index_x = int(screen_width * landmark.x)
-                    index_y = int(screen_height * landmark.y)
-                    print(f"Index finger tip at ({index_x}, {index_y})")
+            eye_avg_y = sum([point[1] for point in left_eye_points]) / len(left_eye_points)
 
-                if id == 4:
-                    cv2.circle(img=frame, center=(x, y), radius=12, color=(0, 255, 255), thickness=-1)
-                    thumb_x = int(screen_width * landmark.x)
-                    thumb_y = int(screen_height * landmark.y)
-                    print(f"Thumb tip at ({thumb_x}, {thumb_y})")
+            mouse_x = int(left_eye_points[0][0] * screen_w / frame_w)
+            mouse_y = int(eye_avg_y * screen_h / frame_h)
+            pyautogui.moveTo(mouse_x, mouse_y)
 
-            if index_x and thumb_x:
-                distance = ((index_x - thumb_x) ** 2 + (index_y - thumb_y) ** 2) ** 0.5
-                print(f"Distance between index and thumb: {distance}")
+            eye_height = left_eye_points[8][1] - left_eye_points[0][1]
+            if eye_height < 10:
+                pyautogui.click()
 
-                if distance < 45:
-                    current_time = time.time()
-                    if current_time - last_click_time < double_click_threshold:
-                        pyautogui.doubleClick()
-                        pyautogui.sleep(1)
-                    else:
-                        pyautogui.click()
-                    last_click_time = current_time
-                else:
-                    new_x, new_y = smooth_move(index_x, index_y, prev_x, prev_y)
-                    pyautogui.moveTo(new_x, new_y)
-                    prev_x, prev_y = new_x, new_y
-
-    cv2.imshow("Mouse Control with Hand Gestures", frame)
+    cv2.imshow('Eye Controlled Mouse', frame)
 
     if cv2.waitKey(1) == ord('q'):
         break
