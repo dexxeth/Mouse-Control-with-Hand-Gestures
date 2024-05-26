@@ -36,11 +36,3 @@ This Python program uses OpenCV, MediaPipe, and PyAutoGUI to control the mouse c
 
    ```bash
    pip install -r requirements.txt
-
-3. **Run the code:**
-
-   ```bash
-   python main.py
-   
-4. **To quit the program, press q on the keyboard.**
-
