@@ -76,7 +76,7 @@ while True:
                     pyautogui.moveTo(new_x, new_y)
                     prev_x, prev_y = new_x, new_y
 
-    cv2.imshow("Virtual Mouse", frame)
+    cv2.imshow("Mouse Control with Hand Gestures", frame)
 
     if cv2.waitKey(1) == ord('q'):
         break
