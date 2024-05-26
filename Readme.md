@@ -1,4 +1,4 @@
-# Virtual Mouse Control with Hand Gestures
+# Mouse Control with Hand Gestures
 
 This Python script uses OpenCV, MediaPipe, and PyAutoGUI to control the mouse cursor with hand gestures detected from the webcam.
 
