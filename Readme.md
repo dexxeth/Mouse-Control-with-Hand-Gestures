@@ -29,8 +29,8 @@ This Python script uses OpenCV, MediaPipe, and PyAutoGUI to control the mouse cu
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/virtual-mouse-control.git
-   cd virtual-mouse-control
+   git clone https://github.com/dexxeth/Mouse-Control-with-Hand-Gestures.git
+   cd Mouse-Control-with-Hand-Gestures
    
 2. **Install the required dependencies:**
 
@@ -40,7 +40,7 @@ This Python script uses OpenCV, MediaPipe, and PyAutoGUI to control the mouse cu
 3. **Run the code:**
 
    ```bash
-   python virtual_mouse.py
+   python main.py
    
 4. **To quit the program, press q on the keyboard.**
 
