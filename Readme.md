@@ -2,18 +2,34 @@
 
 This Python program uses OpenCV, MediaPipe, and PyAutoGUI to control the mouse cursor with hand gestures detected from the webcam.
 
+---
+
 ## Table of Contents
 
 - [Requirements](#requirements)
 - [Features](#features)
-- [Usage](#usage)
+- [Usage (CLI & UI)](#usage)
+- [Controls](#controls)
+- [Demo](#demo)
+- [Credits](#credits)
+
+---
 
 ## Requirements
 
-- Python 3.x
-- OpenCV (`pip install opencv-python`)
-- Mediapipe (`pip install mediapipe`)
-- PyAutoGUI (`pip install pyautogui`)
+Install the following Python packages:
+
+```bash
+
+pip install -r requirements.txt
+
+```
+
+Required packages:
+opencv-python
+mediapipe
+pyautogui
+streamlit
 
 ## Features
 
