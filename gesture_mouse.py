@@ -1,8 +1,8 @@
 import cv2
 import mediapipe as mp
-import pyautogui
 import time
 from collections import deque
+import numpy as np  # Required for fallback frame if needed
 
 class GestureMouse:
     def __init__(self, smoothing=0.8, double_click_threshold=0.3, click_distance=45, buffer_size=5, deadzone=3):
@@ -17,22 +17,26 @@ class GestureMouse:
             max_num_hands=1
         )
         self.drawing_utils = mp.solutions.drawing_utils
-        self.screen_width, self.screen_height = pyautogui.size()
+
+        try:
+            import pyautogui
+            self.screen_width, self.screen_height = pyautogui.size()
+        except Exception:
+            self.screen_width, self.screen_height = 1920, 1080  # fallback for cloud
+            print("⚠️ pyautogui.size() failed. Default screen size used (1920x1080).")
 
         self.prev_x, self.prev_y = self.screen_width // 2, self.screen_height // 2
         self.last_click_time = 0
         self.cap = cv2.VideoCapture(0)
         self.pos_buffer = deque(maxlen=buffer_size)
 
-        # Stability tracking
         self.hand_visible = False
         self.hand_stable_start_time = None
-        self.stability_threshold_sec = 0.2  # Must be visible for this duration to be considered stable
+        self.stability_threshold_sec = 0.2
 
-        # Feedback text
         self.feedback_text = ""
         self.feedback_time = 0
-        self.feedback_duration = 0.5  # seconds
+        self.feedback_duration = 0.5
 
     def smooth_move(self, x, y):
         self.pos_buffer.append((x, y))
@@ -43,7 +47,13 @@ class GestureMouse:
     def get_frame(self):
         success, frame = self.cap.read()
         if not success:
-            return None
+            return np.zeros((480, 640, 3), dtype=np.uint8)  # blank frame fallback
+
+        try:
+            import pyautogui
+        except ImportError:
+            print("⚠️ pyautogui not available. Gesture control disabled.")
+            return frame
 
         frame = cv2.flip(frame, 1)
         frame_height, frame_width, _ = frame.shape
@@ -52,11 +62,9 @@ class GestureMouse:
         hands = output.multi_hand_landmarks
 
         index_x = index_y = thumb_x = thumb_y = 0
-
         current_time = time.time()
 
         if hands:
-            # Hand is visible now
             if not self.hand_visible:
                 self.hand_visible = True
                 self.hand_stable_start_time = current_time
@@ -112,7 +120,6 @@ class GestureMouse:
             self.hand_visible = False
             self.hand_stable_start_time = None
 
-        # Draw feedback text if active
         if current_time - self.feedback_time < self.feedback_duration:
             cv2.putText(
                 frame,
